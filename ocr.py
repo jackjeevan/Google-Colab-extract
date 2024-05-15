@@ -1,8 +1,6 @@
 import os
 import re
 import time
-import uuid
-import urllib.request
 import json
 import psutil
 import shutil
@@ -11,6 +9,7 @@ from io import BytesIO
 from sys import exit as exx
 from subprocess import Popen, PIPE
 from IPython.display import clear_output, HTML, display
+import urllib.request
 
 HOME = os.path.expanduser("~")
 CWD = os.getcwd()
@@ -31,7 +30,6 @@ class Ngrok:
             self.sdict = {}
             for i, sn in enumerate(service):
                 tempcP = f'{HOME}/.ngrok2/{sn[0]}.yml'
-                # Port, Protocol, config path
                 self.sdict[sn[0]] = [self.dport + i, sn[2], tempcP]
 
     def nameport(self, TOKEN, AUTO):
@@ -81,7 +79,7 @@ class Ngrok:
 
     def startWebUi(self, token, dport, nServer, region, btc, configPath,
                    displayB, service, v):
-        installNgrok()
+        self.installNgrok()
         if v:
             clear_output()
             loadingAn(name="lds")
@@ -95,10 +93,10 @@ class Ngrok:
                     region,
                     service)
                 if sn[0] == nServer:
-                    runSh(f"ngrok {sn[2]} -config={self.sdict[nServer][2]} {sn[1]} &", shell=True)
+                    self.runSh(f"ngrok {sn[2]} -config={self.sdict[nServer][2]} {sn[1]} &", shell=True)
         else:
             self.ngrok_config(token, dport, configPath, region, service)
-            runSh(f"ngrok start --config {configPath} --all &", shell=True)
+            self.runSh(f"ngrok start --config {configPath} --all &", shell=True)
         time.sleep(3)
         try:
             if self.USE_FREE_TOKEN:
@@ -162,6 +160,17 @@ class Ngrok:
                     continue
                 return dati
 
+    def installNgrok(self, v=True):
+        ngrokPath = f"{HOME}/.ngrok2/ngrok"
+        if not os.path.exists(ngrokPath):
+            url = "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip"
+            if v:
+                print("Downloading ngrok...")
+            response = urllib.request.urlopen(url)
+            with ZipFile(BytesIO(response.read())) as zfile:
+                zfile.extractall(f"{HOME}/.ngrok2/")
+            os.system(f"chmod +x {HOME}/.ngrok2/ngrok")
+
 def checkAvailable(path_="", userPath=False):
     from os import path as _p
 
@@ -220,52 +229,48 @@ def displayUrl(data, btc='b', pNamU='Public URL: ', EcUrl=None, ExUrl=None, cls=
             padding: 10px 20px;
             border: none;
             background: none;
-            cursor: pointer;
-            font-family: "Source Code Pro";
-            font-weight: 900;
-            font-size: 100%;
+            font-family: 'Source Code Pro', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 17px;
             color: var(--text-color);
-            background-color: var(--btn-color);
-            box-shadow: var(--shadow-color) 2px 2px 22px;
-            border-radius: 4px;
-            z-index: 0;
-            overflow: hidden;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.35s;
         }}
-        button:focus {{
-            outline-color: transparent;
-            box-shadow: var(--btn-color) 2px 2px 22px;
-        }}
-        .right::after, button::after {{
-            content: var(--content);
-            display: block;
-            position: absolute;
-            white-space: nowrap;
-            padding: 40px 40px;
-            pointer-events: none;
-        }}
-        button::before {{
+        button::before, button::after {{
             content: "";
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 300%;
-            height: 300%;
-            transition: all 0.3s;
-            background-repeat: no-repeat;
-            background-size: 25% 25%, 25% 25%;
-            background-position: top left, bottom right;
-            z-index: -1;
-            transition: all 0.5s;
-        }}
-        button:hover::before {{
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            border-radius: 4px;
+            border: 1px solid var(--btn-color);
+            transition: transform 0.35s;
         }}
-        button {{
-            --content: "{showTxT}";
+        button::before {{
+            transform: scale(1.1);
+        }}
+        button::after {{
+            transform: scale(0.9);
+        }}
+        button:hover::before, button:hover::after {{
+            transform: scale(1);
+        }}
+        button::after {{
+            background: var(--btn-color);
+            z-index: -1;
+        }}
+        button:hover {{
+            color: var(--bg-color);
+        }}
+        button:hover::after {{
+            opacity: 0;
+        }}
+        button:hover::before {{
+            transform: scale(1.2);
+            background: var(--shadow-color);
+            opacity: 0.25;
         }}
     </style>
     <div>
